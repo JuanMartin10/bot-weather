@@ -1,0 +1,31 @@
+name: Daily forecast
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 8 * * *"
+      timezone: "Europe/Madrid"
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Each run saves under a new key and restores the latest one: cache entries are immutable.
+      - uses: actions/cache@v6
+        with:
+          path: state
+          key: state-${{ github.run_id }}
+          restore-keys: state-
+      - run: node src/main.ts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WEATHER_LATITUDE: ${{ secrets.WEATHER_LATITUDE }}
+          WEATHER_LONGITUDE: ${{ secrets.WEATHER_LONGITUDE }}

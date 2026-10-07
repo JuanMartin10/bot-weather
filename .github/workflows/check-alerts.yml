@@ -1,0 +1,32 @@
+name: Check alerts
+
+on:
+  workflow_dispatch:
+  schedule:
+    # A few minutes past the hour: scheduled runs are delayed most at the top of the hour.
+    - cron: "5 13,19 * * *"
+      timezone: "Europe/Madrid"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Each run saves under a new key and restores the latest one: cache entries are immutable.
+      - uses: actions/cache@v6
+        with:
+          path: state
+          key: state-${{ github.run_id }}
+          restore-keys: state-
+      - run: node src/main.ts --check-alerts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WEATHER_LATITUDE: ${{ secrets.WEATHER_LATITUDE }}
+          WEATHER_LONGITUDE: ${{ secrets.WEATHER_LONGITUDE }}
