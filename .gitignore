@@ -1,0 +1,6 @@
+.env
+node_modules/
+logs/
+state/
+launchd/
+notes/

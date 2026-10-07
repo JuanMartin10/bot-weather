@@ -1,0 +1,13 @@
+{
+  "name": "bot-weather",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "weather": "node --env-file=.env src/main.ts",
+    "check-alerts": "node --env-file=.env src/main.ts --check-alerts",
+    "chat-id": "node --env-file=.env scripts/get-chat-id.ts"
+  }
+}
