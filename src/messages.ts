@@ -1,8 +1,8 @@
 import type { Alert } from "./alerts.ts";
 import { LOCATION_NAME } from "./config.ts";
 import { summarizeDayPeriods, type DayPeriodId } from "./day-periods.ts";
-import type { Forecast } from "./forecast.ts";
-import { describeWeather, weatherEmoji } from "./weather-codes.ts";
+import type { Forecast, HourlyForecast } from "./forecast.ts";
+import { describeWeather, weatherEmoji, worstWeatherCode } from "./weather-codes.ts";
 
 const PERIOD_LABELS: Record<DayPeriodId, string> = {
   morning: "🌅 Mañana",
@@ -26,17 +26,25 @@ function formatAlert(alert: Alert): string {
   }
 }
 
+// The headline and the periods describe `remainingHours` only: what is already over is of no
+// use to the reader. The temperature range, wind and sun lines still cover the whole day.
 export function formatDailyForecast(
   forecast: Forecast,
-  headlineCode: number,
+  remainingHours: HourlyForecast[],
   alerts: Alert[],
 ): string {
-  const degrees = (min: number, max: number) => `${Math.round(min)}–${Math.round(max)} °C`;
+  const degrees = (min: number, max: number) => {
+    const [low, high] = [Math.round(min), Math.round(max)];
+    return low === high ? `${low} °C` : `${low}–${high} °C`;
+  };
+
+  const headlineCode =
+    worstWeatherCode(remainingHours.map((h) => h.weatherCode)) ?? forecast.weatherCode;
 
   const alertLines =
     alerts.length > 0 ? ["⚠️ Avisos para hoy", ...alerts.map(formatAlert), ""] : [];
 
-  const periodLines = summarizeDayPeriods(forecast.hours).map(
+  const periodLines = summarizeDayPeriods(remainingHours).map(
     (period) =>
       `${PERIOD_LABELS[period.id]}: ${degrees(period.minTemperature, period.maxTemperature)}` +
       ` · ☔ ${period.maxPrecipitationProbability} %`,
@@ -50,8 +58,7 @@ export function formatDailyForecast(
     `${weatherEmoji(headlineCode)} ${LOCATION_NAME}, hoy: ${describeWeather(headlineCode)}`,
     `🌡️ ${degrees(forecast.minTemperature, forecast.maxTemperature)}`,
     "",
-    ...periodLines,
-    "",
+    ...(periodLines.length > 0 ? [...periodLines, ""] : []),
     `💨 Viento: ${wind} km/h, rachas de ${gusts} km/h`,
     `☀️ Sol: ${forecast.sunrise} – ${forecast.sunset}`,
   ].join("\n");

@@ -16,9 +16,13 @@ const DAY_PERIODS: { id: DayPeriodId; fromHour: number; toHour: number }[] = [
   { id: "evening", fromHour: 20, toHour: 24 },
 ];
 
+// Periods with none of the given hours are left out, so passing only the hours still to come
+// drops the periods that are already over.
 export function summarizeDayPeriods(hours: HourlyForecast[]): DayPeriodSummary[] {
-  return DAY_PERIODS.map(({ id, fromHour, toHour }) => {
+  return DAY_PERIODS.flatMap(({ id, fromHour, toHour }) => {
     const inPeriod = hours.filter((h) => h.hour >= fromHour && h.hour < toHour);
+    if (inPeriod.length === 0) return [];
+
     const temperatures = inPeriod.map((h) => h.temperature);
 
     return {

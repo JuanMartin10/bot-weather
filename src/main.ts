@@ -15,7 +15,6 @@ import { formatAlertUpdate, formatDailyForecast } from "./messages.ts";
 import { parseOptions } from "./options.ts";
 import { readDailyState, saveDailyState } from "./state-store.ts";
 import { sendMessage } from "./telegram.ts";
-import { worstWeatherCode } from "./weather-codes.ts";
 
 const log = (text: string) => console.log(`[${timestamp(TIMEZONE)}] ${text}`);
 
@@ -36,7 +35,7 @@ async function run(): Promise<void> {
     return;
   }
 
-  // Hours already gone are of no use to the reader, so alerts and the headline ignore them.
+  // Hours already gone are of no use to the reader, so alerts and the message ignore them.
   const fromHour = options.fromHour ?? currentHour(TIMEZONE);
   const remainingHours = forecast.hours.filter((h) => h.hour >= fromHour);
   const alerts = detectAlerts(remainingHours);
@@ -52,9 +51,7 @@ async function run(): Promise<void> {
     }
     message = formatAlertUpdate(includedAlerts);
   } else {
-    const headlineCode =
-      worstWeatherCode(remainingHours.map((h) => h.weatherCode)) ?? forecast.weatherCode;
-    message = formatDailyForecast(forecast, headlineCode, alerts);
+    message = formatDailyForecast(forecast, remainingHours, alerts);
   }
 
   if (options.dryRun) {
