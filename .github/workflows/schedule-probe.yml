@@ -1,0 +1,14 @@
+name: Schedule probe
+
+# Temporary: checks whether scheduled runs fire at all in this repository. Sends nothing.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Triggered by '${{ github.event.schedule }}' at $(date -u +%H:%M:%S) UTC"
