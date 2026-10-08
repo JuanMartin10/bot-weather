@@ -1,5 +1,6 @@
 export type Options = {
   checkAlertsOnly: boolean;
+  onceDaily: boolean;
   dryRun: boolean;
   fromHour?: number;
 };
@@ -11,6 +12,7 @@ export function parseOptions(args: string[]): Options {
 
   return {
     checkAlertsOnly: args.includes("--check-alerts"),
+    onceDaily: args.includes("--once-daily"),
     dryRun: args.includes("--dry-run"),
     fromHour: fromHour ? Number(fromHour.slice(FROM_HOUR_FLAG.length)) : undefined,
   };

@@ -79,6 +79,10 @@ npm run weather        # send today's forecast
 npm run check-alerts   # send a message only if there is a new alert
 ```
 
+Add `-- --once-daily` to `npm run weather` to skip the send when it is before 08:30 or the
+forecast already went out today. The send time is `DAILY_SEND_TIME` in
+[`src/config.ts`](src/config.ts).
+
 Two flags help when testing:
 
 ```bash
@@ -88,15 +92,19 @@ npm run weather -- --dry-run --from-hour=0   # behave as if it were midnight
 
 ## Running on a schedule
 
-Two workflows in [`.github/workflows`](.github/workflows) run the bot on GitHub Actions. Times are
-in `Europe/Madrid` and follow daylight saving time.
+Two workflows in [`.github/workflows`](.github/workflows) run the bot on GitHub Actions.
 
-| Workflow         | When            | What it does                           |
-| ---------------- | --------------- | -------------------------------------- |
-| `daily-forecast` | 08:30           | Sends the full forecast                |
-| `check-alerts`   | 13:05 and 19:05 | Sends a message only on a new alert    |
+| Workflow         | When (Madrid time)                      | What it does                        |
+| ---------------- | --------------------------------------- | ----------------------------------- |
+| `daily-forecast` | 08:30                                   | Sends the full forecast             |
+| `check-alerts`   | 13:05 and 19:05 (an hour earlier in winter) | Sends a message only on a new alert |
 
 Both can also be started by hand from the Actions tab.
+
+GitHub's scheduler works in UTC and is best effort: runs can start late or be dropped. So
+`daily-forecast` is queued every hour from 06:30 to 10:30 UTC and runs with `--once-daily`, which
+sends the forecast on the first run at or after 08:30 Madrid time and does nothing on the rest.
+That keeps the send time stable across daylight saving changes and gives it a few retries.
 
 To use them in your own copy, add these repository secrets under
 **Settings → Secrets and variables → Actions**:
@@ -106,8 +114,8 @@ To use them in your own copy, add these repository secrets under
 - `WEATHER_LATITUDE`
 - `WEATHER_LONGITUDE`
 
-Each run starts on a clean machine, so the record of alerts already sent (`state/alerts.json`) is
-carried from one run to the next with `actions/cache`.
+Each run starts on a clean machine, so the record of what was already sent today
+(`state/daily.json`) is carried from one run to the next with `actions/cache`.
 
 ## How it is organised
 
@@ -123,7 +131,7 @@ Each module has one job, and `main.ts` only wires them together.
 | `alerts.ts`        | Decides which conditions deserve an alert               |
 | `day-periods.ts`   | Summarises morning, afternoon and evening               |
 | `messages.ts`      | Builds the message text                                 |
-| `alert-store.ts`   | Remembers which alerts were already sent today          |
+| `state-store.ts`   | Remembers what was already sent today                   |
 | `clock.ts`         | Current time in a given timezone                        |
 | `telegram.ts`      | Sends a message through the Telegram Bot API            |
 

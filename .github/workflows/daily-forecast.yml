@@ -3,8 +3,10 @@ name: Daily forecast
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 8 * * *"
-      timezone: "Europe/Madrid"
+    # Times are UTC. 08:30 in Madrid is 06:30 UTC in summer and 07:30 UTC in winter; the later
+    # slots are retries, because scheduled runs can be delayed or dropped. `--once-daily` makes
+    # every run after the first valid one a no-op.
+    - cron: "30 6-10 * * *"
 
 permissions:
   contents: read
@@ -23,7 +25,8 @@ jobs:
           path: state
           key: state-${{ github.run_id }}
           restore-keys: state-
-      - run: node src/main.ts
+      # A manual run always sends; only scheduled runs are deduplicated.
+      - run: node src/main.ts ${{ github.event_name == 'schedule' && '--once-daily' || '' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

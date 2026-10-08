@@ -3,9 +3,9 @@ name: Check alerts
 on:
   workflow_dispatch:
   schedule:
-    # A few minutes past the hour: scheduled runs are delayed most at the top of the hour.
-    - cron: "5 13,19 * * *"
-      timezone: "Europe/Madrid"
+    # Times are UTC: 13:05 and 19:05 in Madrid during summer time, one hour earlier in winter.
+    # A few minutes past the hour, because scheduled runs are delayed most at the top of it.
+    - cron: "5 11,17 * * *"
 
 permissions:
   contents: read
