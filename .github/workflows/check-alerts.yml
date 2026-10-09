@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+# Both workflows share the cached state, so their runs must not overlap.
+concurrency:
+  group: bot-state
+
 jobs:
   check:
     runs-on: ubuntu-latest

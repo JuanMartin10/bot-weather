@@ -2,6 +2,11 @@ name: Daily forecast
 
 on:
   workflow_dispatch:
+    inputs:
+      once_daily:
+        description: Skip if today's forecast was already sent
+        type: boolean
+        default: false
   schedule:
     # Times are UTC. 08:30 in Madrid is 06:30 UTC in summer and 07:30 UTC in winter; the later
     # slots are retries, because scheduled runs can be delayed or dropped. `--once-daily` makes
@@ -10,6 +15,10 @@ on:
 
 permissions:
   contents: read
+
+# Both workflows share the cached state, so their runs must not overlap.
+concurrency:
+  group: bot-state
 
 jobs:
   send:
@@ -25,8 +34,9 @@ jobs:
           path: state
           key: state-${{ github.run_id }}
           restore-keys: state-
-      # A manual run always sends; only scheduled runs are deduplicated.
-      - run: node src/main.ts ${{ github.event_name == 'schedule' && '--once-daily' || '' }}
+      # A plain manual run always sends. Scheduled runs, and dispatches that ask for it, are
+      # deduplicated so an external scheduler and GitHub's own can both trigger this workflow.
+      - run: node src/main.ts ${{ (github.event_name == 'schedule' || inputs.once_daily) && '--once-daily' || '' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

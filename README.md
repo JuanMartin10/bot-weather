@@ -106,6 +106,14 @@ GitHub's scheduler works in UTC and is best effort: runs can start late or be dr
 sends the forecast on the first run at or after 08:30 Madrid time and does nothing on the rest.
 That keeps the send time stable across daylight saving changes and gives it a few retries.
 
+When that is not punctual enough, an external scheduler can start either workflow through the
+REST API ([create a workflow dispatch event](https://docs.github.com/en/rest/actions/workflows#create-a-workflow-dispatch-event)).
+Pass the `once_daily` input to `daily-forecast` so its runs and GitHub's own are deduplicated:
+
+```json
+{ "ref": "main", "inputs": { "once_daily": "true" } }
+```
+
 To use them in your own copy, add these repository secrets under
 **Settings → Secrets and variables → Actions**:
 
